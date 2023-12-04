@@ -1,0 +1,13 @@
+1. Use function xTaskGetCurrentTaHandle() to obtain the current task’s handle.
+2. You give up the CPU by calling taskYIELD(). If there are no other ready to execute
+tasks, the control will return to the caller.
+3. The application CPU is CPU 1 on the dual-core ESP32. On single-core ESP32’s, there is
+only CPU 0.
+4. The default Arduino task name is the loopTask.
+5. One task is suspended by calling vTaskSuspend().
+6. A task can delete itself by calling vTaskDelete(), either with a null handle (indicating
+self) or with its specific task handle.
+7. A task that deletes itself defers the release of its stack until the IDLE task can process
+the request.
+8. The preemption occurs with the system tick interrupt.
+9. The ESP32 tick interrupts occur 1 millisecond apart.
