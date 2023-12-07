@@ -41,12 +41,20 @@ do
         # make directory if not exists
         mkdir -p "$destination"
 
+        # extract year and month from creation date
+        year=$(date -d "$creationdate" +%Y)
+        month=$(date -d "$creationdate" +%m)
+
+        # create subdirectory based on year and month
+        subdir="$destination/$year-$month"
+        mkdir -p "$subdir"
+
         # copy file to destination
-        cp "$file" "$destination"
+        cp "$file" "$subdir"
 
         # get md5sum of original and copied file
         originalhash=$(md5sum "$file" | cut -d " " -f1)
-        copiedhash=$(md5sum "$destination/$(basename "$file")" | cut -d " " -f1)
+        copiedhash=$(md5sum "$subdir/$(basename "$file")" | cut -d " " -f1)
 
         # check if md5sum matches
         if [ "$originalhash" == "$copiedhash" ]; then
