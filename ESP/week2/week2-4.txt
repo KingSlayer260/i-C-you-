@@ -1,0 +1,13 @@
+5. A binary semaphore is invariably initialized in an empty state 
+and is not initially given.
+
+6. A counting semaphore is established with an initial value corresponding
+to the specified count in the xSemaphoreCreateCounting() function's second parameter.
+
+7. In the dining philosophers problem, a counting semaphore is associated with each fork. When 
+a philosopher wants to pick up a fork, it must acquire the semaphore. If the semaphore is available 
+(set to 1), the philosopher takes the fork; otherwise, it waits. This prevents deadlocks because if a 
+philosopher cannot acquire a fork, it releases any forks it already holds, avoiding circular waiting and 
+allowing progress for others. Counting semaphores ensure controlled access to forks, preventing potential 
+deadlocks in the dining philosophers scenario. by constraining the maximum number desiring to eat 
+to three, there is always a guarantee that at least one philosopher can eat.

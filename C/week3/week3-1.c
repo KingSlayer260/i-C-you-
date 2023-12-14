@@ -1,102 +1,77 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-#define REGEL_EINDE '\n'
-
-FILE* start_leesbestand( char* bestandsnaam )
-{
-	FILE *bestand;
-	char standaard_bestandsnaam[100] = "input.txt";
-
-	printf("\n");
-	printf("Voer de bestandsnaam in voor leestoegang.\t");
-	printf("[ Voer # in voor standaardbestand \"%s\" ] \n", standaard_bestandsnaam );	
-	scanf("%s", bestandsnaam);   
-	
-	if ( bestandsnaam[0] == '#' ) {
-		strcpy(bestandsnaam, standaard_bestandsnaam);	
-		printf("Standaard invoerbestand wordt gebruikt\n");		
-	}
-	
-    bestand = fopen(bestandsnaam, "r");
-    if (bestand == NULL)
-    {
-        printf("Kon bestand %s niet openen \n", bestandsnaam);
-        exit(0);
-    }	
-	
-	return bestand;
-}	
-
-FILE* start_schrijfbestand( char* bestandsnaam )
-{
-	FILE *bestand;
-	char standaard_bestandsnaam[100] = "output.txt";
-
-	printf("\n");	
-	printf("Voer de bestandsnaam in voor schrijftoegang.\t");
-	printf("[ Voer # in voor standaardbestand \"%s\" ]\n", standaard_bestandsnaam );	
-	scanf("%s", bestandsnaam);   
-	if ( bestandsnaam[0] == '1' ) {
-		strcpy(bestandsnaam, standaard_bestandsnaam);	
-		printf("Standaard uitvoerbestand wordt gebruikt\n");
-	}
-	
-    bestand = fopen(bestandsnaam, "w");
-    if (bestand == NULL)
-    {
-        printf("Kon bestand %s niet openen \n", bestandsnaam);
-        exit(0);
-    }	
-	
-	return bestand;
-}	
-
-int main()
-{
-    FILE *invoerBestandPtr, *uitvoerBestandPtr;
-    char lees_bestandsnaam[100], schrijf_bestandsnaam[100];
-	char gelezen_teken, geschreven_teken;
-	
-	invoerBestandPtr = start_leesbestand( lees_bestandsnaam );	
-	uitvoerBestandPtr = start_schrijfbestand( schrijf_bestandsnaam );	
-	
-	int teller = 0;
-	
-	gelezen_teken = fgetc( invoerBestandPtr );
-	while ( gelezen_teken != EOF ) { 
-	
-		if ( ( gelezen_teken != REGEL_EINDE ) && ( gelezen_teken != ' ' ) && ( gelezen_teken != '.' )  ) {		
-			geschreven_teken = gelezen_teken + 1;
-			teller++;
-			printf("\nTeller=%d\tTeken=%c", teller, gelezen_teken );
-			if ( (int)gelezen_teken < 100 ) { printf(" "); }
-			printf("\tTeken_uit=%c", geschreven_teken );
-			
-		}
-		else {						
-			geschreven_teken = gelezen_teken;
-			if ( gelezen_teken != REGEL_EINDE ) {
-				teller++;
-				printf("\nTeller=%d\tTeken=%c", teller, gelezen_teken);
-			}	
-		}	
-		fputc( geschreven_teken, uitvoerBestandPtr);		
-		gelezen_teken = fgetc( invoerBestandPtr );
-	
-
-		if ( gelezen_teken == EOF ) { printf("\nTeller=%d\tTeken=EOF: NIET NAAR BESTAND GESCHREVEN", teller+1 ); }	
-
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        printf("Gebruik: %s <origineel_bestand> <gekopieerd_bestand>\n", argv[0]);
+        return 1;
     }
 
-    printf("\nInhoud van %s is met 1 ASCII waarde verschoven", lees_bestandsnaam );  
-    printf("\nInhoud gekopieerd naar %s", schrijf_bestandsnaam );
-	printf("\nTotaal aantal verwerkte tekens = %d\n", teller );
-  
-    fclose(invoerBestandPtr);
-    fclose(uitvoerBestandPtr);
-		
+    FILE *origineelBestand, *gekopieerdBestand;
+    char karakter;
+
+    // Open het originele bestand voor lezen
+    origineelBestand = fopen(argv[1], "r");
+
+    // Controleer of het bestand succesvol is geopend
+    if (origineelBestand == NULL) {
+        printf("Kan het originele bestand niet openen.\n");
+        return 1;
+    }
+
+    // Open het gekopieerde bestand voor schrijven
+    gekopieerdBestand = fopen(argv[2], "w");
+
+    // Controleer of het bestand succesvol is geopend
+    if (gekopieerdBestand == NULL) {
+        printf("Kan het gekopieerde bestand niet maken.\n");
+        fclose(origineelBestand);
+        return 1;
+    }
+
+    // Variabele om het aantal karakters bij te houden
+    int aantalKarakters = 0;
+
+    // Lees karakters uit het originele bestand en druk inhoud af
+    printf("Inhoud van het originele bestand:\n");
+    while ((karakter = fgetc(origineelBestand)) != EOF) {
+        putchar(karakter);
+        // Karakters, zoals LF en EOF, die niet zichtbaar zijn, niet meegeteld
+        if (karakter != '\n' && karakter != EOF) {
+            aantalKarakters++;
+        }
+    }
+    printf("\n");
+
+    // Terug naar het begin van het bestand voor de volgende loop
+    rewind(origineelBestand);
+
+    // Lees karakters uit het originele bestand en schrijf gekopieerde karakters naar het nieuwe bestand
+    printf("Inhoud van het gekopieerde bestand (vervangende waardes):\n");
+    while ((karakter = fgetc(origineelBestand)) != EOF) {
+        // Schrijf het gekopieerde karakter naar het nieuwe bestand
+        if (karakter == '\n' || karakter == EOF) {
+            putchar(karakter);
+            fputc(karakter, gekopieerdBestand);
+        } else {
+            // Behoud alle karakters inclusief spaties, verschuif alleen andere tekens
+            if (karakter != ' ') {
+                char vervangendKarakter = karakter + 1;
+                putchar(vervangendKarakter);
+                fputc(vervangendKarakter, gekopieerdBestand);
+            } else {
+                putchar(' ');
+                fputc(' ', gekopieerdBestand);
+            }
+        }
+    }
+
+    // Sluit beide bestanden
+    fclose(origineelBestand);
+    fclose(gekopieerdBestand);
+
+    // Print het aantal karakters
+    printf("\nAantal zichtbare karakters in het originele bestand: %d\n", aantalKarakters);
+
     return 0;
 }
-
