@@ -1,2 +1,2 @@
-de deboucing werkt als volgt de button wordt geread en deze wordt opgeslage in de level variable daarna wordt de variable sate 1 bit naar links geshift en het nieuwe level signal wordt erin ge-ored.
+de deboucing werkt als volgt de button wordt gelezen en deze data wordt opgeslage in de level variable. daarna wordt de variable state 1 bit naar links geshift en het nieuwe level signal wordt erin ge-ored.
 deze state variable wordt dan ge and-ed met de value mask. als hierna alle bits 0 matchen dan gaat de knop naar pressed state. andersom als het allemaal 1's zijn dan gaat ie naarde release state.

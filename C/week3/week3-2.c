@@ -2,60 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAXIMAAL_INVOEREN 200 // Maxmiaal aantal persoonsgegevens dat ingevoerd kan worden om crashes te voorkomen
-
 // Definieer de Persoon structuur
 struct Persoon {
     char naam[50];
     int leeftijd;
 };
 
-int main() {
-    int aantalPersonen = 0; // Houd het aantal aangemaakte personen bij
-    struct Persoon *personen = NULL; // Pointer naar het blok van structuren
-
-    char doorgaan;
-
-    do {
-        // Controleren of het maximale aantal personen niet is overschreden
-        if (aantalPersonen >= MAXIMAAL_INVOEREN) {
-            printf("Het maximale aantal ingevoerde personen is bereikt. Je kan geen nieuwe personen toevoegen.\n");
-            break;
-        }
-
-        // Verkrijg geheugen voor een extra Persoon structuur
-        struct Persoon *tmp = (struct Persoon *)realloc(personen, (aantalPersonen + 1) * sizeof(struct Persoon));
-
-        // Controleer of realloc succesvol was
-        if (tmp == NULL) {
-            printf("Geheugenfout bij realloc.\n");
-
-            // Geef eerder toegewezen geheugen vrij voordat het programma eindigt
-            free(personen);
-
-            exit(EXIT_FAILURE);
-        }
-
-        // Wijs de nieuwe pointer toe aan 'personen'
-        personen = tmp;
-
-        // Invoeren van gegevens voor de nieuwe Persoon
-        printf("Voer de naam in voor persoon %d: ", aantalPersonen + 1);
-        scanf("%s", personen[aantalPersonen].naam);
-
-        printf("Voer de leeftijd in voor persoon %d: ", aantalPersonen + 1);
-        scanf("%d", &personen[aantalPersonen].leeftijd);
-
-        // Verhoog het aantalPersonen
-        aantalPersonen++;
-
-        // Vragen of de gebruiker nog een persoon wil toevoegen
-        printf("Wil je nog een persoon toevoegen? (j/n): ");
-        scanf(" %c", &doorgaan);
-
-    } while (doorgaan == 'j' || doorgaan == 'J');
-
-    // Print de informatie van alle aangemaakte personen
+void printPersonen(struct Persoon *personen, int aantalPersonen) {
     printf("\nOverzicht van alle aangemaakte personen:\n");
     for (int i = 0; i < aantalPersonen; i++) {
         printf("Persoon %d\n", i + 1);
@@ -63,9 +16,54 @@ int main() {
         printf("Leeftijd: %d\n", personen[i].leeftijd);
         printf("\n");
     }
+}
 
-    // Geef het geheugen vrij voordat het programma eindigt
-    free(personen);
+int main() {
+    int aantalPersonen = 0;
+    struct Persoon *personen = NULL;
+    char doorgaan;
+
+    do {
+        struct Persoon *tmp = (struct Persoon *)realloc(personen, (aantalPersonen + 1) * sizeof(struct Persoon));
+
+        if (tmp == NULL) {
+            printf("Geheugenfout bij realloc. Het geheugen is vol.\n");
+
+            // Print de reeds ingevoerde personen
+            printPersonen(personen, aantalPersonen);
+
+            // Geef eerder toegewezen geheugen vrij
+            free(personen);
+
+            return EXIT_FAILURE;
+        }
+
+        personen = tmp; 
+
+        printf("Voer de naam in voor persoon %d: ", aantalPersonen + 1);
+        scanf("%49s", personen[aantalPersonen].naam); // Gebruik %49s om bufferoverloop te voorkomen
+
+        int inputValid = 0;
+        while (!inputValid) { // check of de waarde voor leeftijd wel een int is
+            printf("Voer de leeftijd in voor persoon %d: ", aantalPersonen + 1);
+            if (scanf("%d", &personen[aantalPersonen].leeftijd) == 1) {
+                inputValid = 1;
+            } else {
+                printf("Ongeldige invoer. Voer een geheel getal in.\n");
+                while (getchar() != '\n'); // Leeg de input buffer
+            }
+        }
+
+        aantalPersonen++;
+
+        printf("Wil je nog een persoon toevoegen? (j/n): ");
+        scanf(" %c", &doorgaan);
+
+    } while (doorgaan == 'j' || doorgaan == 'J'); // als invoer j is of J doorgaan
+
+    printPersonen(personen, aantalPersonen); // print lijst met personen
+
+    free(personen); // maak geheugen vrij
 
     return 0;
 }

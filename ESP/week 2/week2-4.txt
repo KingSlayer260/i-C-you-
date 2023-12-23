@@ -1,13 +1,5 @@
-5. A binary semaphore is invariably initialized in an empty state 
-and is not initially given.
+5.Een binaire 'semafoor' begint altijd leeg en wordt niet meteen beschikbaar gemaakt.
 
-6. A counting semaphore is established with an initial value corresponding
-to the specified count in the xSemaphoreCreateCounting() function's second parameter.
+6.Een 'telsysteem' voor 'semaforen' begint met een startwaarde die overeenkomt met het opgegeven aantal in de tweede parameter van de functie xSemaphoreCreateCounting().
 
-7. In the dining philosophers problem, a counting semaphore is associated with each fork. When 
-a philosopher wants to pick up a fork, it must acquire the semaphore. If the semaphore is available 
-(set to 1), the philosopher takes the fork; otherwise, it waits. This prevents deadlocks because if a 
-philosopher cannot acquire a fork, it releases any forks it already holds, avoiding circular waiting and 
-allowing progress for others. Counting semaphores ensure controlled access to forks, preventing potential 
-deadlocks in the dining philosophers scenario. by constraining the maximum number desiring to eat 
-to three, there is always a guarantee that at least one philosopher can eat.
+7.Bij het probleem van dining philosopher wordt aan elke vork een tel-semafoor gekoppeld. Als een philosopher een vork wil gebruiken, moet hij eerst het telsysteem verkrijgen. Als het beschikbaar is (op 1 staat), kan de philosopher de vork nemen; anders moet hij wachten. Dit voorkomt vastlopen doordat als een philosopher geen vork kan krijgen, hij alle vorken die hij al heeft, loslaat. Hierdoor kan iemand anders verder en wordt kringvormig wachten voorkomen. Het telsysteem zorgt ervoor dat de toegang tot vorken beheerst wordt, waardoor mogelijke problemen worden voorkomen in het eetende filosofen scenario. Door te beperken dat maximaal drie philosophers tegelijk willen eten, is er altijd minstens één philosopher die kan eten.
