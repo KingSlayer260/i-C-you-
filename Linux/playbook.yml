@@ -29,3 +29,9 @@
         - apache2
         - mariadb
         - syslog-ng
+
+    - name: Configure syslog-ng to send logs to the controller
+      template:
+        src: syslog-ng.conf.j2
+        dest: /etc/syslog-ng/syslog-ng.conf
+      become: true 
