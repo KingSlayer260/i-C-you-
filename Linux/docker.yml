@@ -1,6 +1,6 @@
 ---
 - name: Install Docker
-  hosts: your_target_host
+  hosts: 10.0.0.30
   become: true
 
   tasks:
