@@ -1,16 +1,16 @@
 ---
 - name: Install Docker and Start Container
-  hosts: minion
-  become: true
+  hosts: your_client_machine
+  become: yes
 
   tasks:
-    - name: Update apt package cache
+    - name: Update apt package cache (for Ubuntu)
       apt:
         update_cache: yes
       when: ansible_os_family == 'Debian'
 
-    - name: Install required packages for Docker
-      package:
+    - name: Install dependencies for Docker (for Ubuntu)
+      apt:
         name:
           - apt-transport-https
           - ca-certificates
@@ -24,33 +24,34 @@
         url: https://download.docker.com/linux/ubuntu/gpg
       when: ansible_os_family == 'Debian'
 
-    - name: Add Docker repository
+    - name: Add Docker APT repository
       apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+      when: ansible_os_family == 'Debian'
+
+    - name: Update apt package cache (for Ubuntu)
+      apt:
+        update_cache: yes
       when: ansible_os_family == 'Debian'
 
     - name: Install Docker
       apt:
         name: docker-ce
         state: present
-      when: ansible_os_family == 'Debian'
 
     - name: Start Docker service
-      service:
+      systemd:
         name: docker
         state: started
-        enabled: yes
-      when: ansible_os_family == 'Debian'
 
-    - name: Pull Docker image 
-      command: docker pull ubuntu:20.04
-      when: ansible_os_family == 'Debian'
+    - name: Pull Docker image (replace 'your_image' with your desired image)
+      docker_image:
+        name: nginx
+        source: pull
 
-    - name: Generate dynamic names for Docker image and container
-      set_fact:
-        docker_image_name: "your_image_{{ ansible_date_time.epoch }}"
-        docker_container_name: "your_container_{{ ansible_date_time.epoch }}"
+    - name: Start Docker container with Nginx
+      docker_container:
+        name: my_nginx_container
+        image: nginx
+        state: started
 
-    - name: Start Docker container with dynamic names
-      command: docker run -d --name "{{ docker_container_name }}" "{{ docker_image_name }}"
-      when: ansible_os_family == 'Debian'
