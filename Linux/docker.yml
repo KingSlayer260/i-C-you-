@@ -67,3 +67,12 @@
         image: nginx
         state: started
 
+    - name: Check if Docker container is running
+      command: docker ps -f "name=my_nginx_container" --format "{{.Names}}"
+      register: docker_container_status
+      ignore_errors: true
+
+    - name: Print Docker container status
+      debug:
+        var: docker_container_status.stdout_lines
+      when: "'my_nginx_container' in docker_container_status.stdout"
