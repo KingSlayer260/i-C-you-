@@ -44,12 +44,6 @@
         - python3
         - python3-pymysql
 
-    - name: Configure Munin (if needed)
-      # Add tasks here if you need to customize Munin configuration
-
-    - name: Restart Munin (if needed)
-      # Add tasks here if you need to restart Munin
-
   handlers:
     - name: Restart syslog-ng
       service:
