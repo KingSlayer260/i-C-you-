@@ -1,0 +1,33 @@
+# /etc/syslog-ng/syslog-ng.conf
+
+@version: 3.30
+@include "scl.conf"
+
+# Set options
+options {
+    flush_lines (0);
+    time_reopen (10);
+    log_fifo_size (1000);
+    chain_hostnames (off);
+    use_dns (no);
+    use_fqdn (no);
+    create_dirs (no);
+    keep_hostname (yes);
+};
+
+# Define sources
+source s_net {
+    tcp(ip("0.0.0.0") port(514) max-connections(100));
+    udp(ip("0.0.0.0") port(514));
+};
+
+# Define destinations
+destination d_logs {
+    file("/var/logmaster.log");
+};
+
+# Define logs
+log {
+    source(s_net);
+    destination(d_logs);
+};
