@@ -1,5 +1,5 @@
 ---
-- name: Update VM, Ansible, Install syslog-ng, Munin, Apache2, MariaDB, Python3, and Python3-pymysql on Ansible control machine
+- name: Update VM, Install syslog-ng, Munin, Apache2, MariaDB, Python3, and Python3-pymysql on Ansible control machine
   hosts: localhost
   become: yes
 
@@ -13,10 +13,16 @@
       apt:
         upgrade: yes
 
+    - name: Install Python3 pip
+      apt:
+        name: python3-pip
+        state: present
+
     - name: Update Ansible
-      pip:
+      apt:
         name: ansible
         state: latest
+      when: ansible_os_family == 'Debian'
 
     - name: Install syslog-ng
       package:
