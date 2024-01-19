@@ -9,6 +9,22 @@
         update_cache: yes
       when: ansible_os_family == 'Debian'
 
+    - name: Install syslog-ng
+      package:
+        name: syslog-ng
+        state: present
+    
+    - name: Create syslog-ng configuration file
+      template:
+        src: syslog-ng.conf.j2
+        dest: /etc/syslog-ng/syslog-ng.conf
+      notify: Restart syslog-ng
+
+    - name: Install Munin
+      apt:
+        name: munin
+        state: present
+
     - name: Install dependencies for Docker (for Ubuntu)
       apt:
         name:
@@ -66,13 +82,10 @@
         name: my_nginx_container
         image: nginx
         state: started
+        
+  handlers:
+    - name: Restart syslog-ng
+      service:
+        name: syslog-ng
+        state: restarted
 
-    - name: Check if Docker container is running
-      command: docker ps -f "name=my_nginx_container" --format "{{.Names}}"
-      register: docker_container_status
-      ignore_errors: true
-
-    - name: Print Docker container status
-      debug:
-        var: docker_container_status.stdout_lines
-      when: "'my_nginx_container' in docker_container_status.stdout"
