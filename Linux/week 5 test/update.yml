@@ -1,0 +1,30 @@
+---
+- name: Update syslog-ng and Munin
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Update apt repositories (for Debian/Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Update syslog-ng
+      apt:
+        name: syslog-ng
+        state: latest
+
+    - name: Update Munin
+      apt:
+        name: munin
+        state: latest
+
+    - name: Restart syslog-ng
+      service:
+        name: syslog-ng
+        state: restarted
+
+    - name: Restart Munin
+      service:
+        name: munin
+        state: restarted

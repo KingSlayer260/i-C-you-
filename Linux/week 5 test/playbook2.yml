@@ -35,6 +35,14 @@
         dest: /etc/syslog-ng/syslog-ng.conf
       notify: Restart syslog-ng
 
+    - name: Set ownership and permissions on the log file
+      become: yes
+      file:
+        path: /var/log/client.log
+        owner: syslog
+        group: syslog
+        mode: "0640"
+
     - name: Install Munin
       apt:
         name: munin

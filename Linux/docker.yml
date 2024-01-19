@@ -1,6 +1,6 @@
 ---
-- name: Install Docker
-  hosts: 10.0.0.30
+- name: Install Docker and Start Container
+  hosts: minion
   become: true
 
   tasks:
@@ -40,4 +40,17 @@
         name: docker
         state: started
         enabled: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Pull Docker image 
+      command: docker pull ubuntu:20.04
+      when: ansible_os_family == 'Debian'
+
+    - name: Generate dynamic names for Docker image and container
+      set_fact:
+        docker_image_name: "your_image_{{ ansible_date_time.epoch }}"
+        docker_container_name: "your_container_{{ ansible_date_time.epoch }}"
+
+    - name: Start Docker container with dynamic names
+      command: docker run -d --name "{{ docker_container_name }}" "{{ docker_image_name }}"
       when: ansible_os_family == 'Debian'
