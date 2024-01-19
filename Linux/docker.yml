@@ -1,6 +1,6 @@
 ---
 - name: Install Docker and Start Container
-  hosts: your_client_machine
+  hosts: minion
   become: yes
 
   tasks:
