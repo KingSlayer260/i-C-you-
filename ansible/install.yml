@@ -27,6 +27,28 @@
         group: adm
         mode: '0640'
 
+    - name: Install iptables-persistent
+      apt:
+        name: iptables-persistent
+        state: present
+
+    - name: Allow TCP traffic on port 514
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: 514
+        jump: ACCEPT
+
+    - name: Allow UDP traffic on port 514
+      iptables:
+        chain: INPUT
+        protocol: udp
+        destination_port: 514
+        jump: ACCEPT
+
+    - name: Save iptables rules
+      command: /usr/sbin/netfilter-persistent save
+
     - name: Install Munin
       apt:
         name: munin

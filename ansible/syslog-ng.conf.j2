@@ -21,6 +21,18 @@ source s_net {
     internal();
 };
 
+# Define network source for syslog traffic (both UDP and TCP)
+source s_network {
+    network(
+        transport("udp")
+        port(514)
+    );
+    network(
+        transport("tcp")
+        port(514)
+    );
+};
+
 # Define destinations
 destination d_logs {
     file("/var/log/logmaster.log");
@@ -29,5 +41,6 @@ destination d_logs {
 # Define logs
 log {
     source(s_net);
+    source(s_network);  # Include network source for syslog traffic
     destination(d_logs);
 };
