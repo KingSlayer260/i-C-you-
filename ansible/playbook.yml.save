@@ -1,0 +1,57 @@
+---
+- name: Update VM, Install syslog-ng, Munin, Apache2, MariaDB, Python3, and Python3-pymysql on Ansible control machine
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Update apt repositories (for Debian/Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Update the VM
+      apt:
+        upgrade: yes
+
+    - name: Install Python3 pip
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Update Ansible
+      apt:
+        name: ansible
+        state: latest
+      when: ansible_os_family == 'Debian'
+
+    - name: Install syslog-ng
+      package:
+        name: syslog-ng
+        state: present
+
+    - name: Create syslog-ng configuration file
+      template:
+        src: syslog-ng.conf.j2
+        dest: /etc/syslog-ng/syslog-ng.conf
+      notify: Restart syslog-ng
+
+    - name: Install Munin
+      apt:
+        name: munin
+        state: present
+
+    - name: Install Apache2, MariaDB, Python3, and Python3-pymysql
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apache2
+        - mariadb-server
+        - python3
+        - python3-pymysql
+
+  handlers:
+    - name: Restart syslog-ng
+      service:
+        name: syslog-ng
+        state: restart

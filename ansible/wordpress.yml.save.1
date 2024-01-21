@@ -1,0 +1,39 @@
+- hosts: wordpress
+  gather_facts: False
+  become: yes
+  
+  tasks:
+  - name: install python 3
+    raw: test -e /usr/bin/python || (apt -y update && apt install -y python3-minimal)
+   - name: Update apt package cache (for Ubuntu)
+     apt:
+     update_cache: yes
+     when: ansible_os_family == 'Debian'
+
+
+   - name: Install syslog-ng
+     package:
+     name: syslog-ng
+     state: present
+
+   - name: Create syslog-ng configuration file
+     template:
+       src: syslog-ng.conf.j2
+       dest: /etc/syslog-ng/syslog-ng.conf
+     notify: Restart syslog-ng
+
+
+- hosts: wordpress
+
+  roles:
+    - server
+    - php
+    - mysql
+    - wordpress
+
+  handlers:
+    - name: Restart syslog-ng
+      service:
+        name: syslog-ng
+        state: restarted
+

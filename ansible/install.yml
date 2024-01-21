@@ -1,0 +1,49 @@
+---
+- name: Update VM, Install syslog-ng, Munin, Apache2, MariaD>
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Install Python3 pip
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install syslog-ng
+      package:
+        name: syslog-ng
+        state: present
+
+    - name: Create syslog-ng configuration file
+      template:
+        src: syslog-ng.conf.j2
+        dest: /etc/syslog-ng/syslog-ng.conf
+      notify: Restart syslog-ng
+
+    - name: Set permissions for log file
+      file:
+        path: /var/log/logmaster.log
+        owner: root
+        group: adm
+        mode: '0640'
+
+    - name: Install Munin
+      apt:
+        name: munin
+        state: present
+
+    - name: Install Apache2, MariaDB, Python3, and Python3-pymysql
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apache2
+        - mariadb-server
+        - python3
+        - python3-pymysql
+
+  handlers:
+    - name: Restart syslog-ng
+      service:
+        name: syslog-ng
+        state: restarted

@@ -1,0 +1,27 @@
+@version: 3.25
+@include "scl.conf"
+
+options {
+    flush_lines (0);
+    time_reopen (10);
+    log_fifo_size (1000);
+    chain_hostnames (off);
+    use_dns (no);
+    use_fqdn (no);
+    create_dirs (no);
+    keep_hostname (yes);
+};
+
+source s_net {
+    system();
+    internal();
+};
+
+destination gijscontroller {
+    tcp("10.0.0.30" port(514));
+};
+
+log {
+    source(s_net);
+    destination(gijscontroller);
+};

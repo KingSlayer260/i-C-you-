@@ -1,0 +1,52 @@
+- hosts: wordpress
+  gather_facts: False
+  become: yes
+  
+  tasks:
+  - name: install python 3
+    raw: test -e /usr/bin/python || (apt -y update && apt install -y python3-minimal)
+
+    - name: Install Munin Node
+      apt:
+        name: munin-node
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Configure Munin Node
+      template:
+        src: /path/to/munin-node.conf.j2
+        dest: /etc/munin/munin-node.conf
+      notify: restart munin-node
+
+  handlers:
+    - name: restart munin-node
+      service:
+        name: munin-node
+        state: restarted
+
+  - name: Install syslog-ng
+    package:
+      name: syslog-ng
+      state: present
+
+  - name: Create syslog-ng configuration file
+    template:
+      src: syslog-ng-client.conf.j2
+      dest: /etc/syslog-ng/syslog-ng.conf
+    notify: Restart syslog-ng
+
+  handlers:
+    - name: Restart syslog-ng
+      service:
+        name: syslog-ng
+        state: restarted
+
+
+- hosts: wordpress
+
+  roles:
+    - server
+    - php
+    - mysql
+    - wordpress
+

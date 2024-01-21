@@ -1,0 +1,91 @@
+---
+- name: Install Docker and Start Container
+  hosts: minion
+  become: yes
+
+  tasks:
+    - name: Update apt package cache (for Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install syslog-ng
+      package:
+        name: syslog-ng
+        state: present
+    
+    - name: Create syslog-ng configuration file
+      template:
+        src: syslog-ng.conf.j2
+        dest: /etc/syslog-ng/syslog-ng-client.conf
+      notify: Restart syslog-ng
+
+    - name: Install Munin
+      apt:
+        name: munin
+        state: present
+
+    - name: Install dependencies for Docker (for Ubuntu)
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+      when: ansible_os_family == 'Debian'
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+      when: ansible_os_family == 'Debian'
+
+    - name: Update apt package cache (for Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Start Docker service
+      systemd:
+        name: docker
+        state: started
+
+    - name: Install python3-pip
+      apt:
+        name: python3-pip
+        state: present
+      become: yes
+
+    - name: Install Docker SDK for Python
+      pip:
+        name: docker
+        state: present
+      become: yes
+
+    - name: Pull Docker image (replace 'your_image' with your desired image)
+      docker_image:
+        name: nginx
+        source: pull
+
+    - name: Start Docker container with Nginx
+      docker_container:
+        name: my_nginx_container
+        image: nginx
+        state: started
+        
+  handlers:
+    - name: Restart syslog-ng
+      service:
+        name: syslog-ng
+        state: restarted
+

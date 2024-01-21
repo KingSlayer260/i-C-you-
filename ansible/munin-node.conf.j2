@@ -1,0 +1,20 @@
+# munin-node.conf.j2
+#
+# This is a Jinja2 template for the Munin node configuration.
+# Ansible will replace variables and generate the final configuration file.
+
+log_level 4
+log_file /var/log/munin/munin-node.log
+pid_file /var/run/munin/munin-node.pid
+
+# The address on which Munin node will listen. To allow all, use *.
+host *
+# The port Munin node will listen on.
+port 4949
+
+# Define the user that the Munin node will run as. Usually 'munin'.
+user munin
+
+# Allow connections from the Munin server.
+allow ^{{ 10.0.0.40 }}$
+

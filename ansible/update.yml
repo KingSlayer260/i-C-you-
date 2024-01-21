@@ -1,0 +1,48 @@
+---
+- name: Update syslog-ng and Munin
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Update apt repositories (for Debian/Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Update the VM
+      apt:
+        upgrade: yes
+
+    - name: Update Ansible
+      apt:
+        name: ansible
+        state: latest
+      when: ansible_os_family == 'Debian'
+
+    - name: Update syslog-ng
+      apt:
+        name: syslog-ng
+        state: latest
+
+    - name: Update Munin
+      apt:
+        name: munin
+        state: latest
+
+    - name: Restart syslog-ng
+      service:
+        name: syslog-ng
+
+        state: restarted
+    - name: Set permissions for log file
+      file:
+        path: /var/log/logmaster.log
+        owner: root
+        group: adm
+        mode: '0640'
+
+
+    - name: Restart Munin
+      service:
+        name: munin
+        state: restarted
