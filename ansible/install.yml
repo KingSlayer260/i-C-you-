@@ -20,6 +20,12 @@
         dest: /etc/syslog-ng/syslog-ng.conf
       notify: Restart syslog-ng
 
+    - name: Restart syslog-ng service(s)
+      systemd:
+        name: syslog-ng
+        state: restarted
+
+
     - name: Set permissions for log file
       file:
         path: /var/log/logmaster.log
@@ -54,15 +60,6 @@
         name: munin
         state: present
 
-    - name: Install Apache2, MariaDB, Python3, and Python3-pymysql
-      apt:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - apache2
-        - mariadb-server
-        - python3
-        - python3-pymysql
 
   handlers:
     - name: Restart syslog-ng
