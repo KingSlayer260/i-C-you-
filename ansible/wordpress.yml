@@ -6,18 +6,6 @@
   - name: install python 3
     raw: test -e /usr/bin/python || (apt -y update && apt install -y python3-minimal)
 
-  - name: Install Munin Node
-    apt:
-      name: munin-node
-      state: present
-    when: ansible_os_family == 'Debian'
-
-  - name: Configure Munin Node
-    template:
-      src: munin-node.conf.j2
-      dest: /etc/munin/munin-node.conf
-    notify: restart munin-node
-
   - name: Install syslog-ng
     package:
       name: syslog-ng
