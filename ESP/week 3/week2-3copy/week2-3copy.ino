@@ -10,12 +10,16 @@
 const char* ntpServer = "nl.pool.ntp.org";
 const long gmtOffset_sec = 3600;
 const int daylightOffset_sec = 3600;
+//globale taskhandles
+TaskHandle_t taskHandleWiFi;
+TaskHandle_t taskHandleSNTP;
 
+//timesyncsemaphore
+SemaphoreHandle_t timeSyncSemaphore;
 //const variable for timestamp
 const int glob_buf_size = (64 * sizeof(char));
 char *glob_time_buf;
 char currentTime[64];
-
 //nogwat
 volatile int wifi_delay_counter = 0;
 volatile int ntp_delay_counter = 0;
@@ -28,23 +32,25 @@ static const int reset_press = -998;
 static QueueHandle_t audit_queue;
 
 //wifi
-void WiFi_connect(){
+void WiFi_connect(void *argp){
   Serial.println("WiFi_connect: Before WiFi.begin");
   WiFi.begin(ssid, password);
   Serial.println("WiFi_connect: After WiFi.begin");
   while (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi_connect: Before delay");
+    wifi_delay_counter++;
     delay(500);
     Serial.println("WiFi_connect: After delay");
     printf(".");
   }
   printf(" CONNECTED\r\n");
-  vTaskDelete()
+  vTaskDelete(NULL);
 }
 
 
 // connect with NTP server
 void SNTP_connect(void *argp){
+
   const time_t old_past = 1577836800; // 2020-01-01T00:00:00Z printf("\r\nConnect to SNTP server\n");
   printf("\r\nConnect to SNTP server\n");
 
@@ -58,18 +64,21 @@ void SNTP_connect(void *argp){
 
   bool connected = false;
   while (not connected ) {
-  Serial.println("SNTP_connect: Before delay");
-  delay(500);
-  Serial.println("SNTP_connect: After delay");
-  time_t now;
-  if (time(&now) < old_past ) { // if there is no connection with NTP server than local time returns Unix epoch (1970 date)
-    printf(".");
-  }
+    Serial.println("SNTP_connect: Before delay");
+    ntp_delay_counter++;
+    delay(500);
+    Serial.println("SNTP_connect: After delay");
+    time_t now;
+    if (time(&now) < old_past ) { // if there is no connection with NTP server than local time returns Unix epoch (1970 date)
+      printf(".");
+    }
   else {
     printf(" CONNECTED\r\n");
     connected = true;
+    xSemaphoreGive(timeSyncSemaphore); // geef semaphore vrij
   }
  }
+ vTaskDelete(NULL);
 }
 
 // get current time
@@ -150,6 +159,11 @@ static void debounce_task(void *argp) {
 // Hydraulic Press Task (LED)
 //
 static void press_task(void *argp) {
+  // if ( press_task_counter < MAX_COUNTER_VALUE ) {
+  //   printf("\t\tin press_task(): end %d\n", press_task_counter );
+  // }
+  // press_task_counter++;
+  xSemaphoreTake(timeSyncSemaphore, portMAX_DELAY);//neem semaphore
   static const uint32_t enable = (1 << GPIO_BUTTONL)
                                  | (1 << GPIO_BUTTONR);
   BaseType_t s;
@@ -163,8 +177,11 @@ static void press_task(void *argp) {
   char capacity;
   // Make sure press is OFF
   digitalWrite(GPIO_LED, LOW);
-
   for (;;) {
+    if ( press_task_counter < MAX_COUNTER_VALUE ) {
+      printf("\t\tin press_task(): end %d\n", press_task_counter );
+    }
+    press_task_counter++;
     s = xQueueReceive(
       queue,
       &event,
@@ -208,15 +225,17 @@ static void press_task(void *argp) {
       // Deactivate press
       digitalWrite(GPIO_LED, LOW);
     }
-  }
-  if ( press_task_counter < MAX_COUNTER_VALUE ) {
-  printf("\t\tin press_task(): end %d\n", press_task_counter );
+    if ( press_task_counter < MAX_COUNTER_VALUE ) {
+      printf("\t\tin press_task(): end %d\n", press_task_counter );
+    }
   } 
-
 }
 
 
+
 void setup() {
+  // Initialiseer de semaphore
+  timeSyncSemaphore = xSemaphoreCreateBinary();
   // allocate heap memory to store 1 timestap
   glob_time_buf = (char*)malloc(glob_buf_size);
   // check if memory is allocated
@@ -235,39 +254,40 @@ void setup() {
   audit_queue = xQueueCreate(200, (64 * sizeof(char)));
   assert(audit_queue);
 
+
   pinMode(GPIO_LED, OUTPUT);
   pinMode(GPIO_BUTTONL, INPUT_PULLUP);
   pinMode(GPIO_BUTTONR, INPUT_PULLUP);
 
-  printf("Starting Task SNTP_connect\n");
-  rc = xTaskCreatePinnedToCore(
-    SNTP_connect,
-    "SNTP_connect",
-    2024,     // Stack size
-    nullptr,  // Not used
-    3,        // Priority
-    &h,       // Task handle
-    app_cpu   // CPU
-  );
-  assert(rc == pdPASS);
-  assert(h);
-  printf("Stopping Task SNTP_connect\n");
-
-  printf("Starting Task WiFi_connect\n");
+  printf("Before Starting Task WiFi_connect\n");
   rc = xTaskCreatePinnedToCore(
       WiFi_connect,
      "WiFi_connect",
-      2024,
+      4096,
       nullptr,
       2,
-      &h,
+      &taskHandleWiFi,
       app_cpu
   );
   assert(rc == pdPASS);
-  assert(h);
-  printf("Stopping Task WiFi_connect\n");
+  assert(taskHandleWiFi);
+  printf("after starting Task WiFi_connect\n");
 
-  printf("Starting Task debounceL\n");
+  printf("Before Starting Task SNTP_connect\n");
+  rc = xTaskCreatePinnedToCore(
+    SNTP_connect,
+    "SNTP_connect",
+    4096,     // Stack size
+    nullptr,  // Not used
+    3,        // Priority
+    &taskHandleSNTP,       // Task handle
+    app_cpu   // CPU
+  );
+  assert(rc == pdPASS);
+  assert(taskHandleSNTP);
+  printf("after starting Task SNTP_connect\n");
+
+  printf("Before Starting Task debounceL_task\n");
   rc = xTaskCreatePinnedToCore(
     debounce_task,
     "debounceL",
@@ -279,9 +299,9 @@ void setup() {
   );
   assert(rc == pdPASS);
   assert(h);
-  printf("Stopping Task debounceL\n");
+  printf("after starting Task debounceL_task\n");
 
-  printf("Starting Task debounceR\n");
+  printf("Before Starting Task debounceR_task\n");
   rc = xTaskCreatePinnedToCore(
     debounce_task,
     "debounceR",
@@ -293,9 +313,9 @@ void setup() {
   );
   assert(rc == pdPASS);
   assert(h);
-  printf("Stopping Task debounceR\n");
+  printf("after starting Task debounceR_task\n");
 
-  printf("Starting Task led\n");
+  printf("Before Starting Task press_task\n");
   rc = xTaskCreatePinnedToCore(
     press_task,
     "led",
@@ -307,8 +327,7 @@ void setup() {
   );
   assert(rc == pdPASS);
   assert(h);
-  printf("Stopping Task led'\n");
-
+  printf("after starting Task press_task\n");
 }
 
 void loop() {

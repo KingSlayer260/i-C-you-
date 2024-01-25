@@ -1,0 +1,4 @@
+c.
+de code gebruikt een variabele 'buttonPressed' om de status van een knop bij te houden. als een schakelaar wordt ingedrukt wordt deze variabele ingesteld op true en anders false. om te zorgen dat de schakelaar niet meerdere keren wordt geactiveerd(bouncing), gebruikt de code een hartdware timer om de status van de knop tegelmatig te controleren en te wachten tot de bounce stabiel is.
+d. 
+in de code wordt een ESP32 timer gebruikt voor het beheren van de debounce-functie. de timer zorgt voor regelmatige polling van de status van de schakelaar. dit helpt om de timing van de debounce-check nauwkeurig te houden en zorgt ervoor dat het systeem niet wordt geblokkeerd door andere taken of functies. hardwarematige timers zijn vaak nauwkeuriger dan softwarematige timers.
