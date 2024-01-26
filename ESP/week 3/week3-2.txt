@@ -1,0 +1,6 @@
+- door multitasking:
+er kunnen verschillende taken tegelijk actief zijn maar dat betekent niet dat ze niet per se één voor één werken. ze kunnen op verschillende tijden starten en uitvoeren
+- door prioriteiten:
+de prioriteiten geranderen niet dat de taken met lagere prioriteite pas starten nadat de taken met een hogere prioriteit klaar zijn.
+- onafhankelijk:
+press_task wacht niet automatisch op de NTP taak om klaar te zijn tenzij je specifiek iets in je code hebt dat zegt dat het wel zo moet.
