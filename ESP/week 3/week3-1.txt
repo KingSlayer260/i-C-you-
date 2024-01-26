@@ -1,0 +1,25 @@
+1. 0 (least urgent) and 24 (most urgent).
+2. You don't have to explicitly call vTaskStartScheduler() for ESP32 Arduino. The Arduino startup 
+process handles this automatically before the setup() function is executed.
+3. The FreeRTOS scheduler is triggered during the system tick interrupt or within FreeRTOS API 
+calls that alter task priorities, block/unblock tasks, and, optionally, after servicing certain 
+non-tick interrupts.
+4. Tasks with equal priority are scheduled in a round-robin manner, unless considering the unique 
+ESP32 dual-core aspect.
+5. To create a task ready for execution, set it at a lower priority, suspend it, adjust its 
+required priority, and then resume it when it's time for the task to start.
+6. A task is preempted when another task at a higher priority becomes ready or has its priority 
+increased above the current task.
+7. On ESP32, the system tick interrupt occurs every 1 ms, defining the length of a full-time slice.
+8. A time slice may not be full if another task becomes blocked or yields, transferring control to 
+another task before the next system tick interrupt.
+9. Invoking taskYIELD() directly activates the FreeRTOS scheduler without blocking. It schedules 
+the next task in round-robin sequence. If no other tasks share the same priority, control returns 
+immediately to the current task.
+10. The vTaskDelay() function puts a task in the Blocked state until the specified number of ticks have passed.
+11. When calling taskYIELD(), the FreeRTOS scheduler is invoked. If other tasks at the same priority are ready, 
+they will be scheduled in a round-robin fashion.
+12. A task experiencing no CPU time is considered CPU-starved. This occurs when higher priority tasks use all 
+available CPU time. Lower priority tasks can execute only when higher priority tasks are blocked or suspended.
+13. taskYIELD() doesn't schedule higher priority tasks since they are already running if they exist
+in the ready state. Instead, it facilitates scheduling for other tasks at the same priority in a round-robin fashion.

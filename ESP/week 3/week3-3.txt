@@ -1,0 +1,23 @@
+2. Why is it a bad idea to call routines like printf, snprintf() etc.?
+Functions such as printf() and snprintf() often demand a substantial amount of stack space. 
+Moreover, in certain environments, the implementation may lack recursion capabilities.
+
+3. Name the reason why malloc() or free() should never be called from an ISR.
+The functions malloc() and free() typically handle memory using lists of diverse structures. 
+Invoking either of them from an ISR could disrupt the list management, 
+given that these functions are non-reentrant.
+
+4. What stack does the ISR stack frame get allocated from?
+The ESP32 allocates a dedicated stack for interrupt processing, and its size is determined by the 
+macro CONFIG_FREERTOS_ISR_STACKSIZE, which is set at around 1536 bytes.
+
+5. What factors reduce the maximum stack space available for an ISR?
+The stack space diminishes with each pending ISR call. Owing to priority interrupts, there is a
+possibility of nested calls to additional ISR routines before the ongoing ISR concludes.
+
+8. How is the task scheduler invoked from within an ISR?
+The macro portYIELD_FROM_ISR() triggers the task scheduler from within an ISR 
+
+15. Is it permissible to call delay() from within an ISR?
+The use of delay() constitutes a blocking call. This Arduino function calls upon 
+the FreeRTOS routine vTaskDelay(). However, in an ISR, engaging in a blocking call is not allowed.
