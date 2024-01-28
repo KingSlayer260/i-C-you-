@@ -58,15 +58,18 @@ ESP32Timer ITimer1(1);
 
 #define TIMER_INTERVAL_MS             15
 #define DEBOUNCE_TIME                 30
-#define LED_PIN                       22 //14
-#define BUTTON1_PIN                   18 //26
-#define BUTTON2_PIN                   19 //27
+#define LED_PIN                       12 
+#define BUTTON1_PIN                   25 
+#define BUTTON2_PIN                   26
 
 volatile unsigned long  lastDebounceTime_button1  = 0;
 volatile unsigned long  lastDebounceTime_button2  = 0;
 volatile bool           SwitchReset_button1  = true;
 volatile bool           SwitchReset_button2  = true;
 
+/**
+ * @brief Indicates whether button 1 is pressed or not.
+ */
 volatile bool           buttonPressed_button1     = false;
 volatile bool           alreadyTriggered_button1  = false;
 volatile bool           buttonPressed_button2     = false;
@@ -80,7 +83,10 @@ void IRAM_ATTR ButtonCheck();
 void IRAM_ATTR ToggleLED();
 
 
-void IRAM_ATTR Rising_button1_or_2() {
+//Interrupt service routine for the rising edge of button 1.
+//This function is called when button 1 is pressed and released. It debounces the button
+//and updates the necessary variables.
+void IRAM_ATTR Rising_button1() {
   unsigned long currentTime  = millis();
   unsigned long TimeDiff;
 
@@ -92,7 +98,7 @@ void IRAM_ATTR Rising_button1_or_2() {
   }
 }
 
-void IRAM_ATTR Falling_button1_or_2() {
+void IRAM_ATTR Falling_button1() {
   unsigned long currentTime  = millis();
 
   if ( !digitalRead(BUTTON1_PIN) && (currentTime > lastDebounceTime_button1 + DEBOUNCE_TIME)) {
@@ -101,30 +107,60 @@ void IRAM_ATTR Falling_button1_or_2() {
   }
 }
 
-//create here Rising and Falling ISR for button2
+void IRAM_ATTR Falling_button2() {
+  unsigned long currentTime  = millis();
 
-void IRAM_ATTR HWCheckButton(void)
+  if ( !digitalRead(BUTTON2_PIN) && (currentTime > lastDebounceTime_button2 + DEBOUNCE_TIME)) {
+    lastDebounceTime_button2 = currentTime;
+    buttonPressed_button2 = true;
+  }
+} 
+
+// Interrupt service routine for the rising edge of button 2.
+// This function is called when button 2 is pressed and released after a debounce time.
+// It updates the last debounce time and sets the buttonPressed_button2 flag to false. 
+void IRAM_ATTR Rising_button2() {
+  unsigned long currentTime  = millis();
+  unsigned long TimeDiff;
+
+  TimeDiff = currentTime - lastDebounceTime_button2;
+
+  if (digitalRead(BUTTON2_PIN) && (TimeDiff > DEBOUNCE_TIME) ) {
+    buttonPressed_button2 = false;
+    lastDebounceTime_button2 = currentTime;
+  }
+}
+
+//Function to check the hardware button status.
+//This function checks the status of the hardware buttons and performs necessary actions based on the button state.
+//It also ensures that the buttons are not triggered repeatedly when held down.
+bool IRAM_ATTR HWCheckButton(void* arg)
 {
-  if ((!alreadyTriggered_button1 && buttonPressed_button1) || /*same check for button2*/)
+  if ((!alreadyTriggered_button1 && buttonPressed_button1) || (!alreadyTriggered_button2 && buttonPressed_button2))
   {
+    ButtonCheck();
     if(buttonPressed_button1)
         alreadyTriggered_button1 = true;
     else
         alreadyTriggered_button2 = true;
-   Buttoncheck();
+    ButtonCheck();
   }
-  else if (!buttonPressed_button1 ||/* button2*/)
+  else if (!buttonPressed_button1 ||!buttonPressed_button2)
   {
     // Reset flag when button released to avoid triggered repeatedly
     if(buttonPressed_button1)
         alreadyTriggered_button1 = false;
     else
         alreadyTriggered_button2 = false;
-    Buttoncheck();
+    ButtonCheck();
   }
+  return true;
 }
 
-
+//This function is called when an interrupt is triggered to check the state of buttons.
+//It reads the state of BUTTON1_PIN and BUTTON2_PIN and performs actions based on the state.
+//If BUTTON1_PIN is pressed and released, it toggles the LED.
+//If BUTTON2_PIN is pressed and released, it toggles the LED.
 void IRAM_ATTR ButtonCheck()
 {
   boolean SwitchState_button1 = (digitalRead(BUTTON1_PIN));
@@ -138,10 +174,16 @@ void IRAM_ATTR ButtonCheck()
   else if (SwitchState_button1)
     SwitchReset_button1 = true;
 
-  // add code here to check button 2
+  if (!SwitchState_button2 && SwitchReset_button2)
+  {
+    ToggleLED();
+    SwitchReset_button2 = false;
+  }
+  else if (SwitchState_button2)
+    SwitchReset_button2 = true;
 }
 
-
+//This function toggles the LED state.
 void IRAM_ATTR ToggleLED()
 {
   LampState = !LampState;
@@ -156,9 +198,10 @@ void setup()
   pinMode(BUTTON1_PIN, INPUT_PULLUP);
   pinMode(BUTTON2_PIN, INPUT_PULLUP);
 
-  attachInterrupt(digitalPinToInterrupt(BUTTON1_PIN), Falling_button1_or_2, FALLING);
-  attachInterrupt(digitalPinToInterrupt(BUTTON1_PIN), Rising_button1_or_2, RISING);
-  // copy and change lens above to attach interrupt to button2
+  attachInterrupt(digitalPinToInterrupt(BUTTON1_PIN), Falling_button1, FALLING);
+  attachInterrupt(digitalPinToInterrupt(BUTTON1_PIN), Rising_button1, RISING);
+  attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), Falling_button2, FALLING);
+  attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), Rising_button2, RISING);
 
   delay(1000); // wait for usb  
   Serial.begin(115200);
