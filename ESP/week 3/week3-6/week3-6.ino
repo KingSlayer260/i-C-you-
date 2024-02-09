@@ -53,7 +53,7 @@ void IRAM_ATTR handleInterruptButton2() {
 
 void blink_sem_led(int rate) {
     //set Semaphore and when done relase the Semaphore
-    if(xSemaphoreTake(semHandle, 1000)) {
+    if(xSemaphoreTake(semHandle, portMAX_DELAY)) {
         printf("BLINK_SEM_LED, rate: %d\r\n", rate);
 
         for(int count = 0; count < 10; count++) {
