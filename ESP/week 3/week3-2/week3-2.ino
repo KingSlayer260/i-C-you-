@@ -11,6 +11,9 @@ const char* ntpServer = "nl.pool.ntp.org";
 const long gmtOffset_sec = 3600;
 const int daylightOffset_sec = 3600;
 
+// Vlag om aan te geven of de tijd correct is gesynchroniseerd
+volatile bool timeSynced = false;
+
 //const variable for timestamp
 const int glob_buf_size = (64 * sizeof(char));
 char *glob_time_buf;
@@ -68,6 +71,8 @@ void SNTP_connect(void *argp){
   else {
     printf(" CONNECTED\r\n");
     connected = true;
+    // Tijd is gesynchroniseerd met NTP-server
+    timeSynced = true;
   }
  }
 }
@@ -186,6 +191,11 @@ static void press_task(void *argp) {
       state &= ~(1 << -event);
     }
 
+    // Wacht op de juiste tijd van de NTP-server voordat de LED wordt geactiveerd
+    while (!timeSynced) {
+      delay(1000); // Wacht 1 seconde
+    }
+
     if (state == enable) {
       // Activate press when both
       // Left and Right buttons are
@@ -212,7 +222,6 @@ static void press_task(void *argp) {
   if ( press_task_counter < MAX_COUNTER_VALUE ) {
   printf("\t\tin press_task(): end %d\n", press_task_counter );
   } 
-
 }
 
 

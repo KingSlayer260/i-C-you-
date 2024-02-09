@@ -4,3 +4,27 @@ er kunnen verschillende taken tegelijk actief zijn maar dat betekent niet dat ze
 de prioriteiten geranderen niet dat de taken met lagere prioriteite pas starten nadat de taken met een hogere prioriteit klaar zijn.
 - onafhankelijk:
 press_task wacht niet automatisch op de NTP taak om klaar te zijn tenzij je specifiek iets in je code hebt dat zegt dat het wel zo moet.
+
+Verklaring code:
+
+De output van de code is samengevat:
+Start taak SNTP_connect
+Connect to SNTP server
+Start taak WiFi_connect
+WiFi_connect: voor WiFi.begin
+WiFi_connect: After WiFi.begin
+Start taak debounceL
+Start taak debounceR
+Start taak led
+
+Het programma bestaat uit verschillende taken die onafhankelijk van elkaar worden uitgevoerd op de ESP32. Die taken zijn:
+- SNTP_connect: deze taak is verantwoordelijk voor het verbinden met een SNTP-server om de juiste tijd op te halen.
+- WiFi_connect: Deze taak zorgt voor het tot stand brengen van de WiFi-verbinding.
+- Debounce_task: Deze taak wordt gebruikt voor debouncing, een manier om ongewenste/niet realistische schommelingen in de invoer van knoppen te elimineren. Het detecteert alleen stabiele knopdrukken en loslatingen.
+- Press_task: Deze taak controleert de bediening van een LED-uitgang op basis van de status van knoppen. Als specifieke knoppen worden ingedrukt, wordt de LED geactiveerd. 
+
+In de output is te zien dat de taak van de LED na de SNTP_connect wordt uitgevoerd. Echter is het mogelijk om de LED al te activeren voordat de juiste tijd van de NTP-server is ontvangen.
+Dit is waarschijnlijk omdat de LED taak onafhankelijk is en niet wacht op de voltooiing van de SNTP_connect-taak. Dit betekent dat zodra de knoppen zijn ingedrukt, de LED aan kan ongeacht of de NTP-tijd al is ontvangen.
+Dit kan komen doordat elke taak een bepaalde prioriteit heeft en wordt uitgevoerd op basis van die prioriteit en beschikbaarheid van de CPU. Het kan dus zijn dat deze LED taak een hogere prioriteit heeft dan 
+de SNTP_connect-taak. Als de LED taak geen grote taak is kan het mogelijk voorrang krijgen omdat het snel kan worden uitgevoerd.
+
